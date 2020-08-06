@@ -245,7 +245,12 @@ void loop() {
 		
 	} else {
 		// connected to MQTT
-		mqttPublish("Hello world " + String(i++));
+		if ( mqttPublish("Hello world " + String(i)) ) {
+			// successfully published
+			i++;
+		} else {
+			// retry same message
+		}
 		delay(MESSAGE_DELAY_MILLIS);
 	}
 }
