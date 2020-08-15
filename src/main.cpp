@@ -13,8 +13,6 @@
 #define MQTT_BROKER_DISCONNECTED -2
 #define ALL_HEALTHY 0
 
-#define MESSAGE_DELAY_MILLIS 600000
-
 // CONFIGURATION PARAMETERS
 const char ssid[] = SSID_NAME;
 const char pass[] = WPA_PASSWORD;
@@ -26,6 +24,11 @@ char topic[] = MQTT_TOPIC;
 
 // VARIABLE DEFINITIONS
 int status = WL_IDLE_STATUS;
+unsigned int cycle_counter = 0;
+
+float last_temp = -1;	// magic values to ensure dataChanged() passes on first
+float last_hum = -1;	// cylce
+
 String cid;
 
 // FUNCTION DECLERATIONS
@@ -47,6 +50,10 @@ void callback(char* topic, byte* payload, unsigned int length);
 String macToString(byte* mac);
 
 String formatData(float temp, float humidity);
+
+int cycle();
+
+bool dataChanged(float temp, float hum);
 
 
 // CLASS INSTANCES
@@ -203,6 +210,34 @@ String formatData(float temp, float humidity) {
 	return String(String(temp, 3) + "," + String(humidity, 3));
 }
 
+int cycle() {
+	float current_temp = dht22.readTemperature();
+	float current_hum = dht22.readHumidity();
+
+	if (dataChanged(current_temp, current_hum)) {
+		last_temp = current_temp;
+		last_hum = current_hum;
+
+		return mqttPublish(
+			formatData(
+				current_temp,
+				current_hum
+			)
+		);
+
+	} else {
+		last_temp = current_temp;
+		last_hum = current_hum;
+
+		return 1;
+	}
+}
+
+bool dataChanged(float temp, float hum) {
+	// TODO: absolute
+	return (abs(temp - last_temp) > MEAS_THRESHOLD) || (abs(hum - last_hum) > MEAS_THRESHOLD);
+}
+
 
 // ARDUINO SETUP AND LOOP
 
@@ -233,23 +268,31 @@ void setup() {
 
 
 void loop() {
+	cycle_counter++;
+
 	if( !mqtt_client.loop() ) {
 		// disconnected from MQTT
 		fixConnections();
 		
 	} else {
-		// connected to MQTT
-		if ( mqttPublish(
-				formatData(
-					dht22.readTemperature(),
-					dht22.readHumidity()
-				)
-			)
-		) {
-			// successfully published
+		
+		if (cycle_counter % 10 == 0) {
+			// send data irrespective every 10 minutes
+			cycle_counter = 0;
+
+			last_temp = dht22.readTemperature();
+			last_hum = dht22.readHumidity();
+
+			mqttPublish(formatData(
+				last_temp,
+				last_hum
+			));
+
 		} else {
-			// retry same message
+			// if significant change, send every minute
+			cycle();	
 		}
-		delay(MESSAGE_DELAY_MILLIS);
+
+		delay(CYCLE_DELAY_MILLIS);
 	}
 }

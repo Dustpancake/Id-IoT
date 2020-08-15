@@ -8,6 +8,8 @@ Features include
 - debug mode, which prints verbose status updates across the serial connection
 - send temperature and humidity data from a DHT22 device
 
+In the current configuration, will probe the data every `CYCLE_DELAY_MILIS` milliseconds, and if change is greater than `MEAS_THRESHOLD`, will send to the MQTT broker. Otherwise, will wait 10 times `CYCLE_DELAY_MILIS` before sending.
+
 ## Setup
 To setup, create the file `include/secrets.h` and populate the contents with the following configuration parameters
 ```c
@@ -22,6 +24,9 @@ To setup, create the file `include/secrets.h` and populate the contents with the
 
 #define LOG_LEVEL 6	// set to 0 for production
 #define DHTPIN 7
+
+#define CYCLE_DELAY_MILLIS 60000 // one minute
+#define MEAS_THRESHOLD 0.2
 
 #endif
 ```

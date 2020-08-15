@@ -13,5 +13,8 @@ The format is
 #define LOG_LEVEL 6	// set to 0 for production
 #define DHTPIN 7
 
+#define CYCLE_DELAY_MILLIS 60000 // one minute
+#define MEAS_THRESHOLD 0.2
+
 #endif
 ```
