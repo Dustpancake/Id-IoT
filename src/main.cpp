@@ -13,7 +13,7 @@
 #define MQTT_BROKER_DISCONNECTED -2
 #define ALL_HEALTHY 0
 
-#define MESSAGE_DELAY_MILLIS 30000
+#define MESSAGE_DELAY_MILLIS 1000
 
 // CONFIGURATION PARAMETERS
 const char ssid[] = SSID_NAME;
@@ -58,30 +58,30 @@ DHT dht22(DHTPIN, DHT22);
 
 // FUNCTION DEFINITIONS
 void wifiConnect() {
-	Log.notice("[!] WiFi connection status: %d", status);
+	Log.notice("[!] WiFi connection status: %d\n", status);
 
 	while (status != WL_CONNECTED) {
-		Log.verbose("[*] Attempting connection to WPA SSID: %s", ssid);
+		Log.verbose("[*] Attempting connection to WPA SSID: %s\n", ssid);
 		status = WiFi.begin(ssid, pass);
 		delay(10000); // wait 10 seconds for connection
 	}
-	Log.notice("[+] WiFi connection (re)established.");
+	Log.notice("[+] WiFi connection (re)established.\n");
 }
 
 void mqttConnect() {
-	Log.notice("[!] Attempting connection to MQTT broker: %s", server);
+	Log.notice("[!] Attempting connection to MQTT broker: %s\n", server);
 	while (!mqtt_client.connect( (char*) cid.c_str() )) {
-		Log.warning("[-] Connection failed to MQTT broker.");
+		Log.warning("[-] Connection failed to MQTT broker.\n");
 
 		// edge case if WiFi DC'd before MQTT could init
 		if (diagnose() == WIFI_DISCONNECTED) { wifiConnect(); }
 
-		Log.trace("[!] Retrying in 5 seconds.");
+		Log.trace("[!] Retrying in 5 seconds.\n");
 		delay(5000);
-		Log.trace("[!] Retrying...");
+		Log.trace("[!] Retrying...\n");
 	}
-	Log.notice("[+] Successfully connected to MQTT broker: %s", server);
-	Log.trace("[+] Publishing to topic: %s", topic);
+	Log.notice("[+] Successfully connected to MQTT broker: %s\n", server);
+	Log.trace("[+] Publishing to topic: %s\n", topic);
 }
 
 void generateCID() {
@@ -90,74 +90,74 @@ void generateCID() {
 }
 
 bool mqttPublish(String payload) {
-	Log.trace("[!] Attempting to publish on topic: %s", topic);
-	Log.trace("[!] Payload: %s", payload);
+	Log.trace("[!] Attempting to publish on topic: %s\n", topic);
+	Log.trace("[!] Payload: %s\n", payload.c_str());
 
 	if (mqtt_client.publish(topic, (char*) payload.c_str())) {
-		Log.trace("[+] Publish OK.");
+		Log.trace("[+] Publish OK.\n");
 		return true;
 	} else {
-		Log.warning("[-] Publish failed.");
+		Log.warning("[-] Publish failed.\n");
 		return false;
 	}
 }
 
 void printInfo() {
-	Log.verbose("[!] Printing device and status info: ");
+	Log.verbose("[!] Printing device and status info: \n");
 
-	Log.verbose("WiFi Firmware Version: %s", WiFi.firmwareVersion());
+	Log.verbose("WiFi Firmware Version: %s\n", WiFi.firmwareVersion());
 
-	Log.verbose("WiFi connection status: %d", status);
+	Log.verbose("WiFi connection status: %d\n", status);
 	if (status == WL_CONNECTED) {
 
-		Log.verbose("SSID: %s", WiFi.SSID());
+		Log.verbose("SSID: %s\n", WiFi.SSID());
 
 		byte bssid[6]; WiFi.BSSID(bssid);
-		Log.verbose("BSSID: %s", macToString(bssid));
+		Log.verbose("BSSID: %s\n", macToString(bssid).c_str());
 
 		IPAddress ip = WiFi.localIP();
-		Log.verbose("IP Address: %s", ip);
+		Log.verbose("IP Address: %s\n", String(ip).c_str());
 
 		byte mac[6]; WiFi.macAddress(mac);
-		Log.verbose("MAC Address: %s", macToString(mac));
+		Log.verbose("MAC Address: %s\n", macToString(mac).c_str());
 
 		long rssi = WiFi.RSSI();
-		Log.verbose("Signal strength (RSSI): %l", rssi);
+		Log.verbose("Signal strength (RSSI): %l\n", rssi);
 
-		Log.verbose("Using MQTT ClientID: %s", cid);
-		Log.verbose("Server IP Addr: %s", server);
-		Log.verbose("Topic: %s", topic);
+		Log.verbose("Using MQTT ClientID: %s\n", cid.c_str());
+		Log.verbose("Server IP Addr: %s\n", server);
+		Log.verbose("Topic: %s\n", topic);
 
 
 		if (mqtt_client.connected()) {
-			Log.verbose("MQTT Status: connected");
+			Log.verbose("MQTT Status: connected\n");
 		} else {
-			Log.verbose("MQTT Status: disconnected");
+			Log.verbose("MQTT Status: disconnected\n");
 		}
-		Log.verbose("MQTT state int: %d", mqtt_client.state());
+		Log.verbose("MQTT state int: %d\n", mqtt_client.state());
 
 
 	} else {
-		Log.verbose("No WiFi Connection established.");
+		Log.verbose("No WiFi Connection established.\n");
 	}
 
-	Log.verbose("[!] End of device and status info.");
+	Log.verbose("[!] End of device and status info.\n");
 }
 
 int diagnose() {
 	// check WiFi connection
-	Log.trace("[!] Running diagnostics... ");
+	Log.trace("[!] Running diagnostics... \n");
 	if (status != WL_CONNECTED) {
-		Log.trace("[-] WiFi disconnected!");
+		Log.trace("[-] WiFi disconnected!\n");
 		return WIFI_DISCONNECTED;
 	}
 
 	if (mqtt_client.state() != 0) {
-		Log.trace("[-] MQTT Broker disconnected; state int: ", mqtt_client.state());
+		Log.trace("[-] MQTT Broker disconnected; state int: %d\n", mqtt_client.state());
 		return MQTT_BROKER_DISCONNECTED;
 	}
 
-	Log.trace("[+] WiFi and MQTT connections healthy.");
+	Log.trace("[+] WiFi and MQTT connections healthy.\n");
 	return ALL_HEALTHY;
 }
 
@@ -165,12 +165,12 @@ void fixConnections() {
 	int condition = diagnose();
 	switch (condition) {
 		case WIFI_DISCONNECTED:
-			Log.trace("[!] Running WiFi reconnection:");
+			Log.trace("[!] Running WiFi reconnection:\n");
 			wifiConnect();
 			break;
 
 		case MQTT_BROKER_DISCONNECTED:
-			Log.trace("[!] Running MQTT broker reconnection:");
+			Log.trace("[!] Running MQTT broker reconnection:\n");
 			mqttConnect();
 			break;
 
@@ -179,7 +179,7 @@ void fixConnections() {
 			break;
 		
 		default:
-			Log.error("[!] Unknown diagnostics integer: ", condition);
+			Log.error("[!] Unknown diagnostics integer: %s\n", condition);
 			delay(10000);
 	}
 }
@@ -219,6 +219,8 @@ void setup() {
 
 	#endif
 
+	// init dht22
+	dht22.begin();
 
 	// connect
 	wifiConnect();
