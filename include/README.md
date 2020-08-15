@@ -8,8 +8,10 @@ The format is
 #define WPA_PASSWORD "WIFI_PASSWORD"
 
 #define MQTT_SERVER_ADDR "SERVER_ADDRESS"
+#define MQTT_TOPIC "TOPIC_NAME"
 
-#define DEBUG 1	// set to 0 for production
+#define LOG_LEVEL 6	// set to 0 for production
+#define DHTPIN 7
 
 #endif
 ```
