@@ -4,6 +4,7 @@
 #include <PubSubClient.h>
 #include <DHT.h>
 #include <ArduinoLog.h>
+#include <cmath>
 
 #include "secrets.h"
 
@@ -234,8 +235,15 @@ int cycle() {
 }
 
 bool dataChanged(float temp, float hum) {
-	// TODO: absolute
-	return (abs(temp - last_temp) > MEAS_THRESHOLD) || (abs(hum - last_hum) > MEAS_THRESHOLD);
+	if ((isnan(temp)) || (isnan(hum))) {
+		/*	If last values were NaN will return false, such that the server is not filled with NaN
+		on CYCLE_DELAY_MILLIS interval.	
+		*/
+		return false;
+	}
+	else {
+		return (abs(temp - last_temp) > MEAS_THRESHOLD) || (abs(hum - last_hum) > MEAS_THRESHOLD);
+	}
 }
 
 
@@ -277,7 +285,8 @@ void loop() {
 	} else {
 		
 		if (cycle_counter % 10 == 0) {
-			// send data irrespective every 10 minutes
+			// send data irrespective, even if NaN, every 10 CYCLE_DELAY_MILLIS
+			// this is also used as a Health Check on connectivity
 			cycle_counter = 0;
 
 			last_temp = dht22.readTemperature();
