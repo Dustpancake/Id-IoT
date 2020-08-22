@@ -240,6 +240,9 @@ bool dataChanged(float temp, float hum) {
 		on CYCLE_DELAY_MILLIS interval.	
 		*/
 		return false;
+	} else if ((isnan(last_temp)) || (isnan(last_hum))) {
+		/* Cannot do a comparison, but should update old values and send data ASAP */
+		return true;
 	}
 	else {
 		return (abs(temp - last_temp) > MEAS_THRESHOLD) || (abs(hum - last_hum) > MEAS_THRESHOLD);
